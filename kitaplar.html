@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kitaplar</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    #sepet {
+      position: fixed;
+      top: 60px;      
+      right: 20px;    
+      width: 300px;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: none;   
+    }
+
+    #sepet.acik {
+      display: block;
+    }
+
+    #sepetToggleBtn {
+      position: fixed;
+      top: 20px;      
+      right: 20px;   
+      font-size: 24px;
+      background-color: #008CBA;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      z-index: 1001;
+    }
+
+    /* Ödünç alınan kitapların arka planı */
+    #kitapListesi li.oduncAlindi {
+      background-color: #ffdddd;
+    }
+
+    /* Kitap listesi satır stili */
+    #kitapListesi li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    /* Kitap kapağı küçültüldü */
+    .kitap-kapak {
+      width: 40px;
+      height: 60px;
+      object-fit: cover;
+      border: 1px solid #ccc;
+    }
+
+    /* Butonlar için ufak stil */
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      background-color: #008CBA;
+      color: white;
+      transition: background-color 0.3s;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #005f73;
+    }
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    /* Form alanları */
+    #kitapEkleForm {
+      margin: 20px 0;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    #kitapEkleForm input, #kitapEkleForm select {
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Kütüphane Sitesi</h1>
+    <nav>
+      <ul>
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="kitaplar.html">Kitaplar</a></li>
+        <li><a href="iletisim.html">İletişim</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Kitaplar</h2>
+
+    <!-- Kitap Ekleme Formu -->
+    <form id="kitapEkleForm" aria-label="Yeni Kitap Ekleme Formu">
+      <input type="text" id="kitapAdi" placeholder="Kitap Adı" required />
+      <input type="text" id="yazarAdi" placeholder="Yazar Adı" required />
+      <select id="kategori" required>
+        <option value="" disabled selected>Kategori Seçin</option>
+        <option value="Roman">Roman</option>
+        <option value="Distopya">Distopya</option>
+        <option value="Felsefi Roman">Felsefi Roman</option>
+        <option value="Klasik">Klasik</option>
+        <option value="Klasik Roman">Klasik Roman</option>
+        <option value="Tarih">Tarih</option>
+      </select>
+      <input type="text" id="kapakURL" placeholder="Kapak Görsel URL'si" required />
+      <button type="submit">Kitap Ekle</button>
+    </form>
+
+    <!-- Filtre Butonları -->
+    <div id="filtreler">
+      <button onclick="araVeFiltrele('Hepsi')">Hepsi</button>
+      <button onclick="araVeFiltrele('Roman')">Roman</button>
+      <button onclick="araVeFiltrele('Distopya')">Distopya</button>
+      <button onclick="araVeFiltrele('Felsefi Roman')">Felsefi Roman</button>
+      <button onclick="araVeFiltrele('Klasik')">Klasik</button>
+      <button onclick="araVeFiltrele('Klasik Roman')">Klasik Roman</button>
+      <button onclick="araVeFiltrele('Tarih')">Tarih</button>
+    </div>
+
+    <!-- Arama Kutusu -->
+    <input
+      type="text"
+      id="aramaKutusu"
+      placeholder="Kitap ara..."
+      onkeyup="araVeFiltrele()"
+      style="margin:10px 0 20px 0; width: 100%; padding: 10px; font-size: 16px; border-radius: 12px; border: 1px solid #ccc;"
+    />
+
+    <!-- Kitap Listesi -->
+    <ul id="kitapListesi" aria-live="polite" aria-label="Kitap Listesi">
+      <li data-kategori="Roman">
+        <img src="images/suc-ve-ceza.jpg" alt="Suç ve Ceza" class="kitap-kapak" />
+        <span>Suç ve Ceza - Fyodor Dostoyevski</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Distopya">
+        <img src="images/1984.jpg" alt="1984" class="kitap-kapak" />
+        <span>1984 - George Orwell</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Klasik Roman">
+        <img src="images/sefiller.jpg" alt="Sefiller" class="kitap-kapak" />
+        <span>Sefiller - Victor Hugo</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Felsefi Roman">
+        <img src="images/simyacı.jpg" alt="Simyacı" class="kitap-kapak" />
+        <span>Simyacı - Paulo Coelho</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Roman">
+        <img src="images/kürk mantolu madonna.jpg" alt="Kürk Mantolu Madonna" class="kitap-kapak" />
+        <span>Kürk Mantolu Madonna - Sabahattin Ali</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Tarih">
+        <img src="images/MIT.jpg" alt="Milli İstihbarat Teşkilatı" class="kitap-kapak" />
+        <span>Milli İstihbarat Teşkilatı</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Tarih">
+        <img src="images/Nutuk.jpg" alt="Nutuk" class="kitap-kapak" />
+        <span>Nutuk - Mustafa Kemal Atatürk</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Klasik Roman">
+        <img src="images/romeovejuliet.jpg" alt="Romeo ve Juliet" class="kitap-kapak" />
+        <span>Romeo ve Juliet - William Shakespeare</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Klasik">
+        <img src="images/komedya.jpg" alt="İlahi Komedya" class="kitap-kapak" />
+        <span>İlahi Komedya - Dante Alighieri</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Roman">
+        <img src="images/vadidekizambak.jpg" alt="Vadideki Zambak" class="kitap-kapak" />
+        <span>Vadideki Zambak - Honore de Balzac</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Klasik Roman">
+        <img src="images/annekaranına.jpg" alt="Anna Karenina" class="kitap-kapak" />
+        <span>Anna Karenina - Lev Tolstoy</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+      <li data-kategori="Klasik Roman">
+        <img src="images/askvegurur.jpg" alt="Aşk ve Gurur" class="kitap-kapak" />
+        <span>Aşk ve Gurur - Jane Austen</span>
+        <button class="sepeteEkleBtn">Sepete Ekle</button>
+        <button class="oduncAlBtn">Ödünç Al</button>
+      </li>
+    </ul>
+
+    <!-- Ödünçteki Kitaplar Bölümü -->
+    <section id="odunctekiKitaplar" aria-label="Ödünçteki Kitaplar" style="margin-top: 40px;">
+      <h2>Ödünçteki Kitaplar</h2>
+      <ul id="oduncListesi"></ul>
+    </section>
+  </main>
+
+  <!-- Sepet Butonu -->
+  <button id="sepetToggleBtn" title="Sepeti Göster / Gizle">🛒</button>
+
+  <!-- Sepet -->
+  <section id="sepet" aria-label="Sepetiniz">
+    <h3>Sepetiniz</h3>
+    <ul id="sepetListesi"></ul>
+    <button id="sepetiTemizle">Sepeti Temizle</button>
+  </section>
+
+  <footer>
+    <p>© 2025 Kütüphane Sitesi</p>
+  </footer>
+
+  <script>
+    // Sepet görünürlüğünü kontrol et
+    const sepetBtn = document.getElementById('sepetToggleBtn');
+    const sepet = document.getElementById('sepet');
+    const sepetListesi = document.getElementById('sepetListesi');
+    const temizleBtn = document.getElementById('sepetiTemizle');
+
+    sepetBtn.addEventListener('click', () => {
+      sepet.classList.toggle('acik');
+    });
+
+    // Kitap listesi ve ödünç listesi DOM elemanları
+    const kitapListesi = document.getElementById('kitapListesi');
+    const oduncListesi = document.getElementById('oduncListesi');
+
+    // Sepete ekleme işlevi
+    function sepeteEkle(kitapIsmi) {
+      // Zaten sepette var mı kontrol et
+      const varMi = [...sepetListesi.children].some(li => li.textContent.includes(kitapIsmi));
+      if (varMi) {
+        alert('Bu kitap zaten sepette.');
+        return;
+      }
+      const li = document.createElement('li');
+      li.textContent = kitapIsmi;
+
+      const kaldirBtn = document.createElement('button');
+      kaldirBtn.textContent = '✕';
+      kaldirBtn.title = 'Sepetten Kaldır';
+      kaldirBtn.addEventListener('click', () => {
+        sepetListesi.removeChild(li);
+      });
+      li.appendChild(kaldirBtn);
+
+      sepetListesi.appendChild(li);
+      sepet.classList.add('acik'); // Sepeti aç
+    }
+
+    // Sepete ekle butonları için dinleyici atama
+    function sepeteEkleBtnlariGuncelle() {
+      document.querySelectorAll('.sepeteEkleBtn').forEach(btn => {
+        btn.onclick = e => {
+          const kitapLi = e.target.closest('li');
+          const kitapIsmi = kitapLi.querySelector('span').textContent;
+          sepeteEkle(kitapIsmi);
+        };
+      });
+    }
+    sepeteEkleBtnlariGuncelle();
+
+    // Sepeti temizle butonu
+    temizleBtn.addEventListener('click', () => {
+      if (confirm('Sepeti tamamen boşaltmak istediğinizden emin misiniz?')) {
+        sepetListesi.innerHTML = '';
+      }
+    });
+
+    // Arama ve filtreleme fonksiyonu
+    function araVeFiltrele(kategori) {
+      const aramaDegeri = document.getElementById('aramaKutusu').value.toLowerCase();
+      const kitaplar = kitapListesi.querySelectorAll('li');
+
+      kitaplar.forEach(li => {
+        const kitapAdi = li.querySelector('span').textContent.toLowerCase();
+        const kitapKategori = li.getAttribute('data-kategori');
+
+        const kategoriUygun = kategori === 'Hepsi' || !kategori || kategori === '' || kitapKategori === kategori;
+        const aramaUygun = kitapAdi.includes(aramaDegeri);
+
+        if (kategoriUygun && aramaUygun) {
+          li.style.display = 'flex';
+        } else {
+          li.style.display = 'none';
+        }
+      });
+    }
+
+    // Ödünç alma ve iade sistemi
+    function oduncAl(kitapLi) {
+      const kitapIsmi = kitapLi.querySelector('span').textContent;
+
+      // Zaten ödünçte mi kontrol et
+      const varMiOdunc = [...oduncListesi.children].some(li => li.textContent.includes(kitapIsmi));
+      if (varMiOdunc) {
+        alert('Bu kitap zaten ödünçte.');
+        return;
+      }
+
+      // Ödünçteki listeye ekle
+      const li = document.createElement('li');
+      li.textContent = kitapIsmi;
+
+      const iadeBtn = document.createElement('button');
+      iadeBtn.textContent = 'İade Et';
+      iadeBtn.title = 'Kitabı İade Et';
+      iadeBtn.addEventListener('click', () => {
+        oduncListesi.removeChild(li);
+        // Kitabı normal duruma döndür
+        kitapLi.classList.remove('oduncAlindi');
+        kitapLi.querySelector('.oduncAlBtn').disabled = false;
+      });
+
+      li.appendChild(iadeBtn);
+      oduncListesi.appendChild(li);
+
+      // Kitap listesindeki ödünç alma butonunu pasifleştir
+      kitapLi.classList.add('oduncAlindi');
+      kitapLi.querySelector('.oduncAlBtn').disabled = true;
+    }
+
+    // Ödünç alma butonlarına dinleyici ekle
+    function oduncAlBtnlariGuncelle() {
+      document.querySelectorAll('.oduncAlBtn').forEach(btn => {
+        btn.onclick = e => {
+          const kitapLi = e.target.closest('li');
+          oduncAl(kitapLi);
+        };
+      });
+    }
+    oduncAlBtnlariGuncelle();
+
+    // Kitap ekleme formu işlevi
+    const kitapEkleForm = document.getElementById('kitapEkleForm');
+
+    kitapEkleForm.addEventListener('submit', e => {
+      e.preventDefault();
+
+      // Değerleri al
+      const kitapAdi = document.getElementById('kitapAdi').value.trim();
+      const yazarAdi = document.getElementById('yazarAdi').value.trim();
+      const kategori = document.getElementById('kategori').value;
+      const kapakURL = document.getElementById('kapakURL').value.trim();
+
+      if (!kitapAdi || !yazarAdi || !kategori || !kapakURL) {
+        alert('Lütfen tüm alanları doldurun.');
+        return;
+      }
+
+      // Yeni li oluştur
+      const li = document.createElement('li');
+      li.setAttribute('data-kategori', kategori);
+
+      const img = document.createElement('img');
+      img.src = kapakURL;
+      img.alt = kitapAdi;
+      img.className = 'kitap-kapak';
+
+      const span = document.createElement('span');
+      span.textContent = `${kitapAdi} - ${yazarAdi}`;
+
+      const sepeteBtn = document.createElement('button');
+      sepeteBtn.textContent = 'Sepete Ekle';
+      sepeteBtn.className = 'sepeteEkleBtn';
+      sepeteBtn.title = 'Sepete Ekle';
+
+      const oduncBtn = document.createElement('button');
+      oduncBtn.textContent = 'Ödünç Al';
+      oduncBtn.className = 'oduncAlBtn';
+      oduncBtn.title = 'Ödünç Al';
+
+      li.appendChild(img);
+      li.appendChild(span);
+      li.appendChild(sepeteBtn);
+      li.appendChild(oduncBtn);
+
+      kitapListesi.appendChild(li);
+
+      // Butonlara eventleri tekrar ata
+      sepeteEkleBtnlariGuncelle();
+      oduncAlBtnlariGuncelle();
+
+      // Formu temizle
+      kitapEkleForm.reset();
+    });
+
+  </script>
+</body>
+</html>

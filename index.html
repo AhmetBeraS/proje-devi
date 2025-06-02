@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Ana Sayfa - Kütüphane</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Kütüphane Sitesi</h1>
+    <nav>
+      <ul>
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="kitaplar.html">Kitaplar</a></li>
+        <li><a href="iletisim.html">İletişim</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h2>Hoş geldiniz!</h2>
+    <p>Kütüphanemize göz atmak için üst menüyü kullanabilirsiniz.</p>
+
+    <!-- Kullanıcı Kayıt & Giriş Bölümü -->
+    <section id="kullaniciIslemleri" style="margin-top:40px; padding:20px; border:1px solid #ccc; border-radius:10px; max-width:400px; margin-left:auto; margin-right:auto;">
+      <h3>Kullanıcı Kaydı</h3>
+      <form id="kayitFormu">
+        <input type="text" id="kayitKullaniciAdi" placeholder="Kullanıcı Adı" required style="width:100%; padding:8px; margin:8px 0;">
+        <input type="password" id="kayitSifre" placeholder="Şifre" required style="width:100%; padding:8px; margin:8px 0;">
+        <button type="submit" style="width:100%; padding:10px; background-color:#007BFF; color:white; border:none; border-radius:5px; cursor:pointer;">Kayıt Ol</button>
+      </form>
+
+      <h3 style="margin-top:30px;">Giriş Yap</h3>
+      <form id="girisFormu">
+        <input type="text" id="girisKullaniciAdi" placeholder="Kullanıcı Adı" required style="width:100%; padding:8px; margin:8px 0;">
+        <input type="password" id="girisSifre" placeholder="Şifre" required style="width:100%; padding:8px; margin:8px 0;">
+        <button type="submit" style="width:100%; padding:10px; background-color:#28a745; color:white; border:none; border-radius:5px; cursor:pointer;">Giriş Yap</button>
+      </form>
+
+      <div id="mesaj" style="margin-top:15px; text-align:center; color:#d33;"></div>
+      <button id="cikisYapBtn" style="display:none; width:100%; padding:10px; margin-top:20px; background-color:#dc3545; color:white; border:none; border-radius:5px; cursor:pointer;">Çıkış Yap</button>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 KütüphaneWeb</p>
+  </footer>
+
+  <script>
+    // Kullanıcı verileri dizisi (localStorage ile kalıcı tutacağız)
+    let kullanicilar = JSON.parse(localStorage.getItem('kullanicilar')) || [];
+
+    const cikisYapBtn = document.getElementById('cikisYapBtn');
+
+    // Kayıt formu submit işlemi
+    document.getElementById('kayitFormu').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const kullaniciAdi = document.getElementById('kayitKullaniciAdi').value.trim();
+      const sifre = document.getElementById('kayitSifre').value;
+
+      if (kullanicilar.find(k => k.kullaniciAdi === kullaniciAdi)) {
+        mesajGoster('Bu kullanıcı adı zaten kayıtlı!', 'red');
+        return;
+      }
+
+      kullanicilar.push({ kullaniciAdi, sifre });
+      localStorage.setItem('kullanicilar', JSON.stringify(kullanicilar));
+      mesajGoster('Kayıt başarılı! Giriş yapabilirsiniz.', 'green');
+      this.reset();
+    });
+
+    // Giriş formu submit işlemi
+    document.getElementById('girisFormu').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const kullaniciAdi = document.getElementById('girisKullaniciAdi').value.trim();
+      const sifre = document.getElementById('girisSifre').value;
+
+      const kullanici = kullanicilar.find(k => k.kullaniciAdi === kullaniciAdi && k.sifre === sifre);
+      if (kullanici) {
+        mesajGoster('Giriş başarılı! Hoş geldiniz, ' + kullaniciAdi + '.', 'green');
+        localStorage.setItem('girisYapan', kullaniciAdi);
+        kullaniciDurumuGuncelle();
+      } else {
+        mesajGoster('Kullanıcı adı veya şifre yanlış!', 'red');
+      }
+    });
+
+    // Çıkış yap butonu işlemi
+    cikisYapBtn.addEventListener('click', () => {
+      localStorage.removeItem('girisYapan');
+      mesajGoster('Çıkış yaptınız.', 'red');
+      kullaniciDurumuGuncelle();
+    });
+
+    // Mesaj gösterme fonksiyonu
+    function mesajGoster(mesaj, renk) {
+      const mesajDiv = document.getElementById('mesaj');
+      mesajDiv.style.color = renk;
+      mesajDiv.textContent = mesaj;
+      setTimeout(() => {
+        mesajDiv.textContent = '';
+      }, 4000);
+    }
+
+    // Kullanıcı durumuna göre form görünümünü ayarla
+    function kullaniciDurumuGuncelle() {
+      const girisYapan = localStorage.getItem('girisYapan');
+      if (girisYapan) {
+        mesajGoster('Hoş geldiniz, ' + girisYapan + '!', 'green');
+        cikisYapBtn.style.display = 'block';
+        document.getElementById('kayitFormu').style.display = 'none';
+        document.getElementById('girisFormu').style.display = 'none';
+      } else {
+        cikisYapBtn.style.display = 'none';
+        document.getElementById('kayitFormu').style.display = 'block';
+        document.getElementById('girisFormu').style.display = 'block';
+      }
+    }
+
+    window.addEventListener('load', kullaniciDurumuGuncelle);
+  </script>
+</body>
+</html>
